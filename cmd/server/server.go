@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -25,17 +26,18 @@ func (server ServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusMovedPermanently)
 }
 
-func startServer(urlmap1 urlmap.URLMap) {
+func startServer(urlmap1 urlmap.URLMap, port int) {
 	server := ServerHandler{
 		urlMap:	urlmap1,
 	}
-	log.Fatal(http.ListenAndServe(":8081", server))
+	log.Println("Server started on port", port)
+	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), server))
 }
 
 func main() {
 	urlmap := urlmap.New()
 	urlmap.Add("dig", "https://digiato.com")
 	urlmap.Add("asr", "https://asriran.com")
-	startServer(urlmap)
+	startServer(urlmap, 8081)
 }
 
