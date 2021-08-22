@@ -17,7 +17,12 @@ func test1() {
 	tee := zapcore.NewTee(errToConsoleLogger)
 
 	logger := zap.New(tee, zap.AddCaller(), zap.Development())
+	defer logger.Sync()
 	logger.Error("ERRRRRRor")
+
+	zap.ReplaceGlobals(logger)
+	zap.L().Error("Global Errrrrror")
+	zap.S().Error("Global sugared Errrrrror") // zap.S() returns sugar logger
 }
 
 func getErrorToConsoleLogger() zapcore.Core {
@@ -27,6 +32,8 @@ func getErrorToConsoleLogger() zapcore.Core {
 	})
 
 	wsync := zapcore.AddSync(os.Stdout)
+	//wsync := os.Stdout	// because os.Stdout implementes zaocore.WriteSyncer (its implement sync() method) so we can use it without zapcore.AddSync() method
+	wsync = zapcore.Lock(wsync) // zap official doc for Lock(): Lock wraps a WriteSyncer in a mutex to make it safe for concurrent use. In particular, *os.Files must be locked before use.
 
 	encoderConfig := zap.NewProductionEncoderConfig()
 	//encoderConfig.EncodeTime = zapcore.EpochTimeEncoder
@@ -44,5 +51,3 @@ func getErrorToConsoleLogger() zapcore.Core {
 
 	return core
 }
-
-
