@@ -1,6 +1,7 @@
 package logger
 
 type Logger interface {
+	Fatal(msg string, keyVal ...KeyVal)
 	Error(msg string, keyVal ...KeyVal)
 	Debug(msg string, keyVal ...KeyVal)
 	Info(msg string, keyVal ...KeyVal)

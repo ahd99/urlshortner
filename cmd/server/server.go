@@ -2,21 +2,27 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 
 	"github.com/ahd99/urlshortner/pkg/logger"
 	"github.com/ahd99/urlshortner/pkg/logger/zapLogger"
 	"github.com/ahd99/urlshortner/pkg/urlmap"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 type ServerHandler struct {
 	urlMap urlmap.URLMap
 }
 
-func (server ServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (server ServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {	
 	key := r.URL.Path[1:]
 	redirectUrl, err := server.urlMap.GetUrl(key)
+
+	defer func() {
+		totalReq.WithLabelValues(key, "1").Inc()
+	}()
+
 	if err != nil {
 		w.WriteHeader(http.StatusNotFound)
 		logger1.Error("Error in finding url", logger.String("err", err.Error()), logger.String("key", key), logger.String("url", redirectUrl))
@@ -31,14 +37,16 @@ func startServer(urlmap1 urlmap.URLMap, port int) {
 	server := ServerHandler{
 		urlMap: urlmap1,
 	}
-	log.Println("Server started on port", port)
-	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%d", port), server))
+	logger1.Info("Starting Server...", logger.Int("port", 8081))
+	err := http.ListenAndServe(fmt.Sprintf(":%d", port), server)
+	logger1.Fatal("ListenAndServe Error.", logger.Int("port", 8081), logger.String("Error", err.Error()))
 }
 
 var logger1 logger.Logger
 
 func main() {
 	logger1 = initLogger()
+	go initPrometheus()
 	urlmap := urlmap.New()
 	urlmap.Add("dig", "https://digiato.com")
 	urlmap.Add("asr", "https://asriran.com")
@@ -50,3 +58,17 @@ func initLogger() logger.Logger {
 	logger1 := logger.NewLogger(zapLogger.ZapLoggerFactory{})
 	return logger1
 }
+
+var totalReq *prometheus.CounterVec
+
+func initPrometheus() {
+	//promauto.NewCounter()
+	totalReq = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "Req_Count_Total",
+		Help: "counter for received requests",
+	}, []string{"key", "res"})
+	prometheus.Register(totalReq)
+    err := http.ListenAndServe(":2112", promhttp.Handler())
+	logger1.Error("Prometheus ListenAndServe Error.", logger.Int("port", 2112), logger.String("Error", err.Error()))
+}
+

@@ -1,0 +1,10 @@
+// MongoDB Playground
+// Use Ctrl+Space inside a snippet or a string literal to trigger completions.
+
+// create urlshortner database and reqlog collection
+use('urlshortner')
+db.createCollection('reqlog')
+
+// insert to reqlog collection
+use('urlshortner')
+db.reqlog.insertOne({key:"dig", url:"https://digiato.com"})
