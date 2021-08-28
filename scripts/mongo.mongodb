@@ -8,3 +8,7 @@ db.createCollection('reqlog')
 // insert to reqlog collection
 use('urlshortner')
 db.reqlog.insertOne({key:"dig", url:"https://digiato.com"})
+
+// delete a document
+//use('urlshortner')
+//db.reqlog.deleteOne({"_id" : ObjectId("6129e394fb9ba41028ccafca")})
