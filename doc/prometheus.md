@@ -18,7 +18,12 @@ docker pull prom/prometheus
 ### prometheus docker run command.
 
 docker run -d --name prometheus --network urlshortner-network -p 9090:9090 -v ~/workspace/urlshortner/prometheus-config.yml:/etc/prometheus/prometheus.yml prom/prometheus --config.file=/etc/prometheus/prometheus.yml 
+
+docker run -d --name prometheus --network urlshortner-network -p 9090:9090 -v ~/workspace/urlshortner/prometheus-config.yml:/etc/prometheus/prometheus.yml -v ~/workspace/data/prometheus-docker-volume:/prometheus prom/prometheus --config.file=/etc/prometheus/prometheus.yml
+
 - "~/workspace/urlshortner/prometheus-config.yml" is prometheus .yml config file path on host .
+- prometheus store data in /prometheus foder on container
+- "/prometheus" folder of container is mounted to "~/workspace/data/prometheus-docker-volume" folder on host to persist prometheus data so removing container dont delete data
 - -v parameter mounts "~/workspace/urlshortner/prometheus-config.yml" file on host as "/etc/prometheus/prometheus.yml" file on dokcer container.
 - -d runs docker container as deamon
 
@@ -62,6 +67,7 @@ Or, if you don't want/need a background service you can just run:
   mongod --config /usr/local/etc/mongod.conf
 
 ## urlshortner docker
+https://www.youtube.com/watch?v=zJ6WbK9zFpI
 
 ### build
 docker build -t urlshortner .
@@ -70,7 +76,7 @@ docker build -t urlshortner .
 docker run --name urlshortner -d --network urlshortner-network -p 8081:8081 urlshortner
 
 ## 
-### run bash shell on a running container as root
+### run bash shell on a running container(grafanais a runnubg container) as root
 docker exec -it --user root grafana bash
 
 ### show image list
@@ -82,6 +88,25 @@ docker image rm urlshortner
 docker container ls
 ### remove container
 docker remove urlshortner
+
+### remove all containers (containers must be stopped)
+docker container rm $(docker ps -aq)
+
+### remove all images (not used in conatiners)
+docker image rm $(docker image ls -q)
+
+### get info about container
+docker inspect urlshortner
+
+### view container logs that is written to stdout:
+docker logs urlshortner
+
+### set environment variable in docker run
+docker -e ENV_VAR_NAME=value image_name
+
+## ENTRYPOINT and CMD
+https://docs.docker.com/engine/reference/builder/#understand-how-cmd-and-entrypoint-interact
+
 
 
 
