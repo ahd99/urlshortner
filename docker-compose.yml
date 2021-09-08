@@ -1,0 +1,31 @@
+version: "3.7"
+
+services: 
+  urlshortner:
+    build: https://github.com/ahd99/urlshortner.git
+    image: urlshortner
+    ports: 
+      - "8081:8081"
+    networks: 
+      - urlshortner-network
+    depends_on: 
+      - mongo
+
+  mongo:
+    image: mongo
+    # restart: always
+    ports: 
+      - "27018:27017"
+    environment: 
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    volumes: 
+      - ~/workspace/data/mongo-docker-volume:/data/db
+    networks: 
+      - urlshortner-network
+    # command: mongod --bind_ip 0.0.0.0
+    
+
+networks: 
+  urlshortner-network : {}
+
