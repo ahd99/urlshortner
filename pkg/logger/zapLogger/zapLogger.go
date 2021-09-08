@@ -35,6 +35,14 @@ type zapLogger struct {
 	zaplogger *zap.Logger
 }
 
+func (l *zapLogger) Fatal(msg string, keyVal ...logger.KeyVal) {
+	zapfields := make([]zap.Field, len(keyVal))
+	for i := 0; i < len(keyVal); i++ {
+		zapfields[i] = keyVal[i].(zap.Field)
+	}
+	l.zaplogger.Fatal(msg, zapfields...)
+}
+
 func (l *zapLogger) Error(msg string, keyVal ...logger.KeyVal) {
 	zapfields := make([]zap.Field, len(keyVal))
 	for i := 0; i < len(keyVal); i++ {

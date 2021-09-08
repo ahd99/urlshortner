@@ -13,6 +13,26 @@ func main() {
 	test2()
 }
 
+// simplest use
+func test0() {
+	logger := zap.NewExample()
+	//logger := zap.NewProduction()
+	//logger := zap.NewDevelopment()
+	defer logger.Sync()
+	
+	logger.Debug("THis is ,essage", 
+		zap.String("strField", "ali"),
+		zap.Int("weight", 3),
+		zap.Duration("time", 10 * time.Second))	
+	
+	
+	sugar := logger.Sugar()
+	sugar.Infow("log message", "time", 3, "weight", 10)	// {"level":"info","msg":"log message","time":3,"weight":10}
+	sugar.Infof("log message %d %d", 3 ,10)  // {"level":"info","msg":"log message 3 10"}
+	sugar.Info("time: ", 3, "  weight: ", 10)  //{"level":"info","msg":"time: 3  weight: 10"}
+
+}
+
 func test1() {
 	errToConsoleLogger := getErrorToConsoleLogger()
 	tee := zapcore.NewTee(errToConsoleLogger)
