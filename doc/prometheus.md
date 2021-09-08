@@ -47,6 +47,9 @@ mongod --config /usr/local/etc/mongod.conf
 run as background:
 mongod --config /usr/local/etc/mongod.conf --fork
 
+connect to mongodb 
+mongosh "mongodb://127.0.0.1:27017" --username root --authenticationDatabase admin  
+
 run as macos service:
 brew services start mongodb-community
 stop:
