@@ -21,7 +21,7 @@ var mongoClient *mongo.Client
 func InitMongo(logg logger.Logger) {
 	logger1 = logg
 	clientOpts := options.Client()
-	clientOpts.ApplyURI("mongodb://mongo:27017/?directConnection=true&serverSelectionTimeoutMS=2000")
+	clientOpts.ApplyURI("mongodb://root:example@mongo:27017/?directConnection=true&serverSelectionTimeoutMS=2000")
 	mongoClient1, err := mongo.NewClient(clientOpts)
 	if err != nil {
 		logger1.Fatal("Error in mongo.NewClient", logger.String("err", err.Error()))
