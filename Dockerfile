@@ -5,7 +5,6 @@ COPY go.mod ./
 RUN go mod download
 COPY . ./
 RUN go build -o /shortner github.com/ahd99/urlshortner/cmd/server
-EXPOSE 8081
 CMD [ "/shortner" ]
 
 # build command:
