@@ -2,7 +2,7 @@ version: "3.7"
 
 services: 
   urlshortner:
-    build: https://github.com/ahd99/urlshortner.git
+    build: . #https://github.com/ahd99/urlshortner.git
     image: urlshortner
     ports: 
       - "8081:8081"
@@ -13,6 +13,7 @@ services:
 
   mongo:
     image: mongo
+    command: --bind_ip 0.0.0.0
     # restart: always
     ports: 
       - "27018:27017"
@@ -23,7 +24,25 @@ services:
       - ~/workspace/data/mongo-docker-volume:/data/db
     networks: 
       - urlshortner-network
-    # command: mongod --bind_ip 0.0.0.0
+    
+
+  prometheus:
+    image: prom/prometheus
+    command: --config.file=/etc/prometheus/prometheus.yml 
+    ports: 
+      - "9090:9090"
+    networks: 
+      - urlshortner-network
+    volumes: 
+      - ~/workspace/urlshortner/scripts/prometheus-config.yml:/etc/prometheus/prometheus.yml
+      #- ~/workspace/data/prometheus-docker-volume:/prometheus
+
+  grafana:
+    image: grafana/grafana
+    ports: 
+      - "3000:3000"
+    networks: 
+      - urlshortner-network
     
 
 networks: 

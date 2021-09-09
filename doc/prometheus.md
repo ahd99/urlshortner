@@ -17,9 +17,7 @@ docker pull prom/prometheus
 
 ### prometheus docker run command.
 
-docker run -d --name prometheus --network urlshortner-network -p 9090:9090 -v ~/workspace/urlshortner/prometheus-config.yml:/etc/prometheus/prometheus.yml prom/prometheus --config.file=/etc/prometheus/prometheus.yml 
-
-docker run -d --name prometheus --network urlshortner-network -p 9090:9090 -v ~/workspace/urlshortner/prometheus-config.yml:/etc/prometheus/prometheus.yml -v ~/workspace/data/prometheus-docker-volume:/prometheus prom/prometheus --config.file=/etc/prometheus/prometheus.yml
+docker run -d --name prometheus --network urlshortner-network -p 9090:9090 -v ~/workspace/urlshortner/scripts/prometheus-config.yml:/etc/prometheus/prometheus.yml -v ~/workspace/data/prometheus-docker-volume:/prometheus prom/prometheus --config.file=/etc/prometheus/prometheus.yml
 
 - "~/workspace/urlshortner/prometheus-config.yml" is prometheus .yml config file path on host .
 - prometheus store data in /prometheus foder on container
