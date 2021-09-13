@@ -5,7 +5,8 @@ services:
     build: . #https://github.com/ahd99/urlshortner.git
     image: urlshortner
     ports: 
-      - "8081:8081"
+      - "8081:8081"   # url shortner rest api
+      - "8091:8091"   # monitoring grpc api
     networks: 
       - urlshortner-network
     depends_on: 

@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package monitoring;
+
+option go_package = "github.com/ahd99/urlshortner/internal/monitoring/proto";
+
+service Monitoring {
+    rpc Statistics(StatReq) returns (stream StatResp) {};
+    rpc TranList(TranListReq) returns (stream TranListResp) {};
+}
+
+message StatReq {}
+
+message StatResp {
+    int64 count = 1;
+}
+
+message TranListReq {}
+
+message TranListResp {
+    string key = 1;
+    string url = 2;
+    string ip = 3;
+}
+

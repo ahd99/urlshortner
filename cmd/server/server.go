@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	monitor "github.com/ahd99/urlshortner/internal/monitoring/server"
 	"github.com/ahd99/urlshortner/pkg/logger"
 	"github.com/ahd99/urlshortner/pkg/logger/zapLogger"
 	"github.com/ahd99/urlshortner/pkg/mongodb"
@@ -17,12 +18,13 @@ type ServerHandler struct {
 	urlMap urlmap.URLMap
 }
 
-func (server ServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {	
+func (server ServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	key := r.URL.Path[1:]
 	redirectUrl, err := server.urlMap.GetUrl(key)
 
 	defer func() {
 		totalReq.WithLabelValues(key, "1").Inc()
+		monitor.RequestReceived(key, redirectUrl, r.RemoteAddr)
 	}()
 
 	if err != nil {
@@ -54,6 +56,8 @@ func main() {
 	mongodb.InitMongo(logger1)
 	defer mongodb.CloseMongo()
 
+	go StartMonitoringServer(8091)
+
 	urlmap := urlmap.New()
 	urlmap.Add("dig", "https://digiato.com")
 	urlmap.Add("asr", "https://asriran.com")
@@ -75,7 +79,6 @@ func initPrometheus() {
 		Help: "counter for received requests",
 	}, []string{"key", "res"})
 	prometheus.Register(totalReq)
-    err := http.ListenAndServe(":2112", promhttp.Handler())
+	err := http.ListenAndServe(":2112", promhttp.Handler())
 	logger1.Error("Prometheus ListenAndServe Error.", logger.Int("port", 2112), logger.String("Error", err.Error()))
 }
-
