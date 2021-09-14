@@ -10,7 +10,7 @@ import (
 
 type MonitoringServer struct {
 	requestCount int64
-	tranChannel  chan request
+	tranChannel  chan Request
 	statChannel  chan bool
 
 	proto.UnimplementedMonitoringServer
@@ -19,15 +19,15 @@ type MonitoringServer struct {
 var server *MonitoringServer = &MonitoringServer{
 	requestCount: 0,
 	statChannel:  make(chan bool, 10),
-	tranChannel:  make(chan request, 1000),
+	tranChannel:  make(chan Request, 1000),
 }
 
 var logger1 logger.Logger
 
-type request struct {
-	key string
-	url string
-	ip  string
+type Request struct {
+	Key string
+	Url string
+	Ip  string
 }
 
 func (server *MonitoringServer) Statistics(req *proto.StatReq, resp proto.Monitoring_StatisticsServer) error {
@@ -57,14 +57,14 @@ func (server *MonitoringServer) TranList(req *proto.TranListReq, resp proto.Moni
 	for {
 		select {
 		case req := <-server.tranChannel:
-			logger1.Debug("Monitoring -- Reqlist("+strconv.Itoa(connId)+") -- Req received from channel", logger.String("key", req.key), logger.String("url", req.url), logger.String("ip", req.ip))
-			err := resp.Send(&proto.TranListResp{Key: req.key, Url: req.url, Ip: req.ip})
+			logger1.Debug("Monitoring -- Reqlist("+strconv.Itoa(connId)+") -- Req received from channel", logger.String("key", req.Key), logger.String("url", req.Url), logger.String("ip", req.Ip))
+			err := resp.Send(&proto.TranListResp{Key: req.Key, Url: req.Url, Ip: req.Ip})
 			if err != nil {
-				logger1.Error("Monitoring -- Reqlist("+strconv.Itoa(connId)+" ) -- Error sending Req.", logger.String("key", req.key), logger.String("url", req.url), logger.String("ip", req.ip), logger.String("err", err.Error()))
+				logger1.Error("Monitoring -- Reqlist("+strconv.Itoa(connId)+" ) -- Error sending Req.", logger.String("key", req.Key), logger.String("url", req.Url), logger.String("ip", req.Ip), logger.String("err", err.Error()))
 				server.tranChannel <- req
 				return err
 			}
-			logger1.Debug("Monitoring -- Reqlist("+strconv.Itoa(connId)+") -- REq sent to client successfully", logger.String("key", req.key), logger.String("url", req.url), logger.String("ip", req.ip))
+			logger1.Debug("Monitoring -- Reqlist("+strconv.Itoa(connId)+") -- REq sent to client successfully", logger.String("key", req.Key), logger.String("url", req.Url), logger.String("ip", req.Ip))
 		case <-resp.Context().Done():
 			logger1.Debug("Monitoring -- Reqlist("+strconv.Itoa(connId)+") -- Channel was done (closed).",
 				logger.String("err", resp.Context().Err().Error()))
@@ -83,7 +83,7 @@ func RequestReceived(key string, url string, ip string) {
 	}
 
 	select {
-	case server.tranChannel <- request{key, url, ip}:
+	case server.tranChannel <- Request{key, url, ip}:
 		logger1.Debug("tran sent to tranchannel")
 	default:
 	}

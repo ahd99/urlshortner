@@ -44,7 +44,7 @@ func startServer(urlmap1 urlmap.URLMap, port int) {
 		urlMap: urlmap1,
 	}
 	logger1.Info("Starting Server...", logger.Int("port", 8081))
-	err := http.ListenAndServe(fmt.Sprintf(":%d", port), server)
+	err := http.ListenAndServe(fmt.Sprintf("0.0.0.0:%d", port), server)
 	logger1.Fatal("ListenAndServe Error.", logger.Int("port", 8081), logger.String("Error", err.Error()))
 }
 
