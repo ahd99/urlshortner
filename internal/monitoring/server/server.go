@@ -36,7 +36,9 @@ func (server *MonitoringServer) Statistics(req *proto.StatReq, resp proto.Monito
 		logger1.Debug("Monitoring -- statistics -- event received from channel")
 		err := resp.Send(&proto.StatResp{Count: server.requestCount})
 		if err != nil {
-			logger1.Error("Monitoring -- statistics -- Error sending count.", logger.Int64("count", server.requestCount))
+			logger1.Error("Monitoring -- statistics -- Error sending count.", 
+				logger.Int64("count", server.requestCount), 
+				logger.String("err", err.Error()))
 			return err
 		}
 		logger1.Debug("Monitoring -- statistics -- count sent to client successfully")
@@ -56,7 +58,8 @@ func (server *MonitoringServer) TranList(req *proto.TranListReq, resp proto.Moni
 			logger1.Error("Monitoring -- tranlist -- Error sending tran.", 
 					logger.String("key", req.key), 
 					logger.String("url", req.url), 
-					logger.String("ip", req.ip))
+					logger.String("ip", req.ip), 
+					logger.String("err", err.Error()))
 			return err
 		}
 		logger1.Debug("Monitoring -- tranlist -- tran sent to client successfully", 
