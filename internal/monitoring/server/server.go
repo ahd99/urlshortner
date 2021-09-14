@@ -67,6 +67,7 @@ func (server *MonitoringServer) TranList(req *proto.TranListReq, resp proto.Moni
 				logger.String("url", req.url), 
 				logger.String("ip", req.ip))
 	}
+	logger1.Info("Monitoring -- tranlist -- Connection Terminates")
 	return nil
 }
 
