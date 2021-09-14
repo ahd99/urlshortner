@@ -18,6 +18,7 @@ func StartMonitoringServer(port int) {
 
 	var opts []grpc.ServerOption
 	grpcServer := grpc.NewServer(opts...)
+	server.SetLogger(logger1)
 	proto.RegisterMonitoringServer(grpcServer, server.GetServer())
 	logger1.Info("Starting monitoring grpc server. ", logger.Int("port", port))
 	err = grpcServer.Serve(list)
