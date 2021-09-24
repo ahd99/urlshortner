@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: urls-pod  # pod name
+  labels:
+    app: urls-app
+spec:
+  containers:
+  - name: urls-container  # container name
+    image: aaa59/urlshortner:nomongo  # image address on docker hub
+    resources:
+      limits:
+        memory: "128Mi"
+        cpu: "500m"
+    ports:
+      - containerPort: 8082 

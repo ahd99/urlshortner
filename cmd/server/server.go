@@ -3,12 +3,12 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"time"
+	//"time"
 
 	monitor "github.com/ahd99/urlshortner/internal/monitoring/server"
 	"github.com/ahd99/urlshortner/pkg/logger"
 	"github.com/ahd99/urlshortner/pkg/logger/zapLogger"
-	"github.com/ahd99/urlshortner/pkg/mongodb"
+	//"github.com/ahd99/urlshortner/pkg/mongodb"
 	"github.com/ahd99/urlshortner/pkg/urlmap"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
@@ -33,7 +33,7 @@ func (server ServerHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	logger1.Debug("url found.", logger.String("key", key), logger.String("url", redirectUrl))
-	mongodb.InsertReqLog(key, redirectUrl, r.RemoteAddr, time.Now())
+	//mongodb.InsertReqLog(key, redirectUrl, r.RemoteAddr, time.Now())
 
 	w.Header().Set("location", redirectUrl)
 	w.WriteHeader(http.StatusMovedPermanently)
@@ -53,8 +53,9 @@ var logger1 logger.Logger
 func main() {
 	logger1 = initLogger()
 	go initPrometheus()
-	mongodb.InitMongo(logger1)
-	defer mongodb.CloseMongo()
+	
+	//mongodb.InitMongo(logger1)
+	//defer mongodb.CloseMongo()
 
 	go StartMonitoringServer(8091)
 

@@ -11,7 +11,7 @@ var logger1 logger.Logger
 func main() {
 	logger1 = initLogger()
 
-	client.Init("185.235.40.218:8091", logger1)
+	client.Init("localhost:8091", logger1)
 	defer client.Cleanup()
 
 }
