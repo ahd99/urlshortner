@@ -2,8 +2,12 @@ version: "3.7"
 
 services: 
   urlshortner:
-    build: . #https://github.com/ahd99/urlshortner.git
-    image: urlshortner
+    #build: . 
+    #build: https://github.com/ahd99/urlshortner.git
+    build:
+      context: ./.. # set context to project root
+      dockerfile: ./devops/Dockerfile  # Dockerfile path relative to context
+    image: urlshortner:test
     ports: 
       - "8081:8081"   # url shortner rest api
       - "8091:8091"   # monitoring grpc api

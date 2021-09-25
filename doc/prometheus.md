@@ -71,10 +71,18 @@ Or, if you don't want/need a background service you can just run:
 https://www.youtube.com/watch?v=zJ6WbK9zFpI
 
 ### build
+when Dockerfile is in project root path
 docker build -t urlshortner .
+
+when Dockerfile is in devops folder. the context still is project root. run following command in project root directory path.
+docker build -t urlsortner:test -f devops/Dockerfile .  
 
 ### run 
 docker run --name urlshortner -d --network urlshortner-network -p 8081:8081 urlshortner
+
+### docker compose up
+run following command in project root directory path.
+docker-compose -f devops/docker-compose.yml up --build
 
 ## 
 ### run bash shell on a running container(grafanais a runnubg container) as root
