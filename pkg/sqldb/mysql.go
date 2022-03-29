@@ -8,9 +8,25 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
-var db *sql.DB
+type station struct {
+	id        int
+	group     int
+	stId      string
+	slotCount int
+}
 
-func connect() error {
+var ErrNoRowsFound = errors.New("NoRowsFound")
+
+type psDb struct {
+	db            *sql.DB
+	ps_getStation *sql.Stmt
+}
+
+func NewPSDB() *psDb {
+	return &psDb{}
+}
+
+func (p *psDb) connect() error {
 	cfg := mysql.Config{
 		User:   "root",
 		Passwd: "admin123",
@@ -21,8 +37,7 @@ func connect() error {
 	connString := cfg.FormatDSN()
 	fmt.Printf("connection string: %s \n", connString)
 
-	var err error
-	db, err = sql.Open("mysql", connString)
+	db, err := sql.Open("mysql", connString)
 	if err != nil {
 		fmt.Printf("error open db: %s \n", err)
 		return err
@@ -34,36 +49,29 @@ func connect() error {
 		return err
 	}
 
+	p.db = db
 	fmt.Printf("Connected!\n")
 	return nil
 }
 
-func isConnected() bool {
-	if db == nil {
+func (p *psDb) isConnected() bool {
+	if p.db == nil {
 		return false
 	}
 
-	if err := db.Ping(); err != nil {
+	if err := p.db.Ping(); err != nil {
 		return false
 	}
 	return true
 }
 
-func close() {
-	db.Close()
+func (p *psDb) close() {
+	p.ps_getStation.Close()
+	p.db.Close()
 }
 
-type station struct {
-	id        int
-	group     int
-	stId      string
-	slotCount int
-}
-
-var ErrNoRowsFound = errors.New("NoRowsFound")
-
-func getStationList(group int) ([]station, error) {
-	rows, err := db.Query("SELECT id, stGroup, stId, slotCount FROM psRegistery WHERE stGroup = ?", group)
+func (p *psDb) getStationList(group int) ([]station, error) {
+	rows, err := p.db.Query("SELECT id, stGroup, stId, slotCount FROM psRegistery WHERE stGroup = ?", group)
 	if err != nil {
 		fmt.Printf("error query stations. group:%d   err:%v \n", group, err)
 		return nil, err
@@ -87,8 +95,32 @@ func getStationList(group int) ([]station, error) {
 	return stations, nil
 }
 
-func getStation(group int, stId string) (station, error) {
-	row := db.QueryRow("SELECT id, stGroup, stId, slotCount FROM psRegistery WHERE stGroup = ? AND stId = ?", group, stId)
+func (p *psDb) getStation(group int, stId string) (station, error) {
+	var st station
+
+	if p.ps_getStation == nil {
+		stm, err := p.db.Prepare("SELECT id, stGroup, stId, slotCount FROM psRegistery WHERE stGroup = ? AND stId = ?")
+		if err != nil {
+			fmt.Printf("Error preparing statement: %v \n", err)
+			return st, err
+		}
+		p.ps_getStation = stm
+	}
+
+	row := p.ps_getStation.QueryRow(group, stId)
+	err := row.Scan(&st.id, &st.group, &st.stId, &st.slotCount)
+	if err == sql.ErrNoRows {
+		fmt.Printf("no station found. group:%d,  tId:%q \n", group, stId)
+		return st, ErrNoRowsFound
+	} else if err != nil {
+		fmt.Printf("Error querying station. group:%d,  tId:%q   err:%v \n", group, stId, err)
+		return st, err
+	}
+	return st, nil
+}
+
+func (p *psDb) getStation_noPS(group int, stId string) (station, error) {
+	row := p.db.QueryRow("SELECT id, stGroup, stId, slotCount FROM psRegistery WHERE stGroup = ? AND stId = ?", group, stId)
 	var st station
 	err := row.Scan(&st.id, &st.group, &st.stId, &st.slotCount)
 	if err == sql.ErrNoRows {
@@ -101,8 +133,8 @@ func getStation(group int, stId string) (station, error) {
 	return st, nil
 }
 
-func AddStationToRegistery(st station) (int, error) {
-	res, err := db.Exec("INSERT INTO psRegistery (stGroup, stId, slotCount) VALUES (?,?,?)", st.group, st.stId, st.slotCount)
+func (p *psDb) AddStationToRegistery(st station) (int, error) {
+	res, err := p.db.Exec("INSERT INTO psRegistery (stGroup, stId, slotCount) VALUES (?,?,?)", st.group, st.stId, st.slotCount)
 	if err != nil {
 		fmt.Printf("Error inserting station. st:%v,   err:%v \n", st, err)
 		return 0, err
@@ -115,8 +147,8 @@ func AddStationToRegistery(st station) (int, error) {
 	return int(id), nil
 }
 
-func RemoveStationFromRegistery(id int) error {
-	res, err := db.Exec("DELETE FROM psRegistery WHERE id = ?", id)
+func (p *psDb) RemoveStationFromRegistery(id int) error {
+	res, err := p.db.Exec("DELETE FROM psRegistery WHERE id = ?", id)
 	if err != nil {
 		fmt.Printf("Error removing station. id:%v,   err:%v \n", id, err)
 		return err
