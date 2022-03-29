@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: urls-service
+spec:  
+  ports:
+  - port: 30001
+    nodePort: 30001       # send request to localhost:30001
+    targetPort: urls-port-1
+    protocol: TCP
+  selector:
+    app: urls-app
+  type: NodePort

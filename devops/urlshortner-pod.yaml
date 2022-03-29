@@ -13,4 +13,5 @@ spec:
         memory: "128Mi"
         cpu: "500m"
     ports:
-      - containerPort: 8082 
+      - name: urls-port-1
+        containerPort: 8081   # without this line, yet port forward to 8081 in pod works.

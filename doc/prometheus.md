@@ -53,7 +53,7 @@ brew services start mongodb-community
 stop:
 brew services stop mongodb-community
 
-### monog caveats
+### mongo caveats
 ==> Installing mongodb/brew/mongodb-community
 ==> Caveats
 To have launchd start mongodb/brew/mongodb-community now and restart at login:
