@@ -1,9 +1,11 @@
 package sqldb
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/go-sql-driver/mysql"
 )
@@ -16,6 +18,11 @@ type station struct {
 }
 
 var ErrNoRowsFound = errors.New("NoRowsFound")
+
+const (
+	Query_Timeout  time.Duration = 5 * time.Second
+	Update_Timeout time.Duration = 10 * time.Second
+)
 
 type psDb struct {
 	db            *sql.DB
@@ -95,9 +102,10 @@ func (p *psDb) getStationList(group int) ([]station, error) {
 	return stations, nil
 }
 
-func (p *psDb) getStation(group int, stId string) (station, error) {
+func (p *psDb) getStation(group int, stId string, ctx context.Context) (station, error) {
 	var st station
 
+	//TODO : this prepared-statement initialization is not thread-safe
 	if p.ps_getStation == nil {
 		stm, err := p.db.Prepare("SELECT id, stGroup, stId, slotCount FROM psRegistery WHERE stGroup = ? AND stId = ?")
 		if err != nil {
@@ -107,11 +115,20 @@ func (p *psDb) getStation(group int, stId string) (station, error) {
 		p.ps_getStation = stm
 	}
 
-	row := p.ps_getStation.QueryRow(group, stId)
+	ctx, cancelFunc := context.WithTimeout(ctx, Query_Timeout)
+	defer cancelFunc()
+
+	row := p.ps_getStation.QueryRowContext(ctx, group, stId)
 	err := row.Scan(&st.id, &st.group, &st.stId, &st.slotCount)
 	if err == sql.ErrNoRows {
 		fmt.Printf("no station found. group:%d,  tId:%q \n", group, stId)
 		return st, ErrNoRowsFound
+	} else if err == context.DeadlineExceeded {
+		fmt.Printf("context.DeadlineExceeded. group:%d,  tId:%q   err:%v \n", group, stId, err)
+		return st, err
+	} else if err == context.Canceled {
+		fmt.Printf("context.Canceled. group:%d,  tId:%q   err:%v \n", group, stId, err)
+		return st, err
 	} else if err != nil {
 		fmt.Printf("Error querying station. group:%d,  tId:%q   err:%v \n", group, stId, err)
 		return st, err
@@ -134,8 +151,11 @@ func (p *psDb) getStation_noPS(group int, stId string) (station, error) {
 }
 
 func (p *psDb) AddStationToRegistery(st station) (int, error) {
-	res, err := p.db.Exec("INSERT INTO psRegistery (stGroup, stId, slotCount) VALUES (?,?,?)", st.group, st.stId, st.slotCount)
-	if err != nil {
+	ctx, cancelFunc := context.WithTimeout(context.Background(), Update_Timeout)
+	defer cancelFunc()
+
+	res, err := p.db.ExecContext(ctx, "INSERT INTO psRegistery (stGroup, stId, slotCount) VALUES (?,?,?)", st.group, st.stId, st.slotCount)
+	if err != nil { // includes context.DeadlineExceeded
 		fmt.Printf("Error inserting station. st:%v,   err:%v \n", st, err)
 		return 0, err
 	}
@@ -148,7 +168,10 @@ func (p *psDb) AddStationToRegistery(st station) (int, error) {
 }
 
 func (p *psDb) RemoveStationFromRegistery(id int) error {
-	res, err := p.db.Exec("DELETE FROM psRegistery WHERE id = ?", id)
+	ctx, cancelFunc := context.WithTimeout(context.Background(), Update_Timeout)
+	defer cancelFunc()
+
+	res, err := p.db.ExecContext(ctx, "DELETE FROM psRegistery WHERE id = ?", id)
 	if err != nil {
 		fmt.Printf("Error removing station. id:%v,   err:%v \n", id, err)
 		return err
@@ -162,4 +185,30 @@ func (p *psDb) RemoveStationFromRegistery(id int) error {
 		return ErrNoRowsFound
 	}
 	return nil
+}
+
+func (p *psDb) getStation_contextTest(group int, stId string, ctx context.Context, sleepTime int) (station, error) {
+	var st station
+
+	ctx, cancelFunc := context.WithTimeout(ctx, 5*time.Second)
+	defer cancelFunc()
+
+	row := p.db.QueryRowContext(ctx, "SELECT id, stGroup, stId, slotCount, sleep(?) FROM psRegistery WHERE stGroup = ? AND stId = ?", sleepTime, group, stId)
+	var sl int
+	err := row.Scan(&st.id, &st.group, &st.stId, &st.slotCount, &sl)
+	fmt.Printf("ctx.Err():%v\n", ctx.Err())
+	if err == sql.ErrNoRows {
+		fmt.Printf("no station found. group:%d,  tId:%q \n", group, stId)
+		return st, ErrNoRowsFound
+	} else if err == context.DeadlineExceeded {
+		fmt.Printf("context.DeadlineExceeded. group:%d,  tId:%q   err:%v \n", group, stId, err)
+		return st, err
+	} else if err == context.Canceled {
+		fmt.Printf("context.Canceled. group:%d,  tId:%q   err:%v \n", group, stId, err)
+		return st, err
+	} else if err != nil {
+		fmt.Printf("Error querying station. group:%d,  tId:%q   err:%v \n", group, stId, err)
+		return st, err
+	}
+	return st, nil
 }
